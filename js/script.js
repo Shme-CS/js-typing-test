@@ -28,11 +28,16 @@ let currentText = '';
 let textToTypeElement = document.getElementById('textToType');
 let typingInput = document.getElementById('typingInput');
 let timerElement = document.getElementById('timer');
+let wpmElement = document.getElementById('wpm');
+let accuracyElement = document.getElementById('accuracy');
 let userInput = '';
 let timeLeft = 60;
 let timerInterval = null;
 let testStarted = false;
 let testEnded = false;
+let correctChars = 0;
+let incorrectChars = 0;
+let totalCharsTyped = 0;
 
 // Initialize the application
 function init() {
@@ -77,6 +82,51 @@ function handleTyping(event) {
     
     userInput = event.target.value;
     updateTextDisplay();
+    calculateMetrics();
+}
+
+// Calculate WPM and accuracy
+function calculateMetrics() {
+    // Count correct and incorrect characters
+    correctChars = 0;
+    incorrectChars = 0;
+    
+    for (let i = 0; i < userInput.length; i++) {
+        if (i < currentText.length) {
+            if (userInput[i] === currentText[i]) {
+                correctChars++;
+            } else {
+                incorrectChars++;
+            }
+        }
+    }
+    
+    totalCharsTyped = userInput.length;
+    
+    // Calculate WPM (words = characters / 5)
+    const timeElapsed = (60 - timeLeft) || 1; // Prevent division by zero
+    const minutes = timeElapsed / 60;
+    const words = correctChars / 5;
+    const wpm = Math.round(words / minutes);
+    
+    // Calculate accuracy
+    const accuracy = totalCharsTyped > 0 
+        ? Math.round((correctChars / totalCharsTyped) * 100) 
+        : 100;
+    
+    // Update display
+    updateMetricsDisplay(wpm, accuracy);
+}
+
+// Update metrics display
+function updateMetricsDisplay(wpm, accuracy) {
+    if (wpmElement) {
+        wpmElement.textContent = wpm;
+    }
+    
+    if (accuracyElement) {
+        accuracyElement.textContent = `${accuracy}%`;
+    }
 }
 
 // Start the countdown timer
