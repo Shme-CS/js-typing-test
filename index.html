@@ -107,6 +107,34 @@
                     </div>
                 </div>
                 <button class="btn btn-primary btn-large" id="restartBtn">Try Again</button>
+                <button class="btn btn-secondary btn-large" id="viewHistoryBtn">View History</button>
+            </div>
+        </div>
+
+        <!-- History Modal -->
+        <div class="history-modal" id="historyModal">
+            <div class="history-content">
+                <div class="history-header">
+                    <h2>Typing History</h2>
+                    <button class="close-btn" id="closeHistoryBtn">&times;</button>
+                </div>
+                
+                <div class="best-score-section">
+                    <h3>🏆 Best Score</h3>
+                    <div class="best-score-card" id="bestScoreCard">
+                        <p>No scores yet. Complete a test to see your best score!</p>
+                    </div>
+                </div>
+                
+                <div class="history-list-section">
+                    <div class="history-list-header">
+                        <h3>Recent Tests</h3>
+                        <button class="btn btn-secondary btn-small" id="clearHistoryBtn">Clear History</button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <p class="no-history">No test history yet. Complete a test to start tracking!</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

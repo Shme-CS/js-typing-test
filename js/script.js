@@ -34,8 +34,12 @@ let wpmElement = document.getElementById('wpm');
 let accuracyElement = document.getElementById('accuracy');
 let errorsElement = document.getElementById('errors');
 let resultsModal = document.getElementById('resultsModal');
+let historyModal = document.getElementById('historyModal');
 let restartBtn = document.getElementById('restartBtn');
 let resetBtn = document.getElementById('resetBtn');
+let viewHistoryBtn = document.getElementById('viewHistoryBtn');
+let closeHistoryBtn = document.getElementById('closeHistoryBtn');
+let clearHistoryBtn = document.getElementById('clearHistoryBtn');
 let difficultySelect = document.getElementById('difficulty');
 let durationSelect = document.getElementById('duration');
 let themeToggle = document.getElementById('themeToggle');
@@ -79,6 +83,18 @@ function setupEventListeners() {
     
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    if (viewHistoryBtn) {
+        viewHistoryBtn.addEventListener('click', showHistory);
+    }
+    
+    if (closeHistoryBtn) {
+        closeHistoryBtn.addEventListener('click', closeHistory);
+    }
+    
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', clearHistory);
     }
 }
 
@@ -269,6 +285,9 @@ function endTest() {
     finalWpm = wpmElement ? parseInt(wpmElement.textContent) : 0;
     finalAccuracy = accuracyElement ? parseInt(accuracyElement.textContent) : 0;
     
+    // Save score to history
+    saveScore();
+    
     // Show results modal
     showResults();
 }
@@ -379,3 +398,163 @@ function renderTextWithHighlight(typedText) {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', init);
+
+
+// Save score to localStorage
+function saveScore() {
+    const score = {
+        wpm: finalWpm,
+        accuracy: finalAccuracy,
+        errors: errorCount,
+        chars: totalCharsTyped,
+        difficulty: currentDifficulty,
+        duration: initialTime,
+        date: new Date().toISOString()
+    };
+    
+    // Get existing scores
+    let scores = JSON.parse(localStorage.getItem('typingScores')) || [];
+    
+    // Add new score
+    scores.unshift(score);
+    
+    // Keep only last 50 scores
+    if (scores.length > 50) {
+        scores = scores.slice(0, 50);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('typingScores', JSON.stringify(scores));
+}
+
+// Get all scores from localStorage
+function getScores() {
+    return JSON.parse(localStorage.getItem('typingScores')) || [];
+}
+
+// Get best score
+function getBestScore() {
+    const scores = getScores();
+    if (scores.length === 0) return null;
+    
+    // Find highest WPM
+    return scores.reduce((best, current) => {
+        return current.wpm > best.wpm ? current : best;
+    });
+}
+
+// Show history modal
+function showHistory() {
+    if (historyModal) {
+        displayBestScore();
+        displayHistory();
+        historyModal.classList.add('show');
+    }
+}
+
+// Close history modal
+function closeHistory() {
+    if (historyModal) {
+        historyModal.classList.remove('show');
+    }
+}
+
+// Display best score
+function displayBestScore() {
+    const bestScore = getBestScore();
+    const bestScoreCard = document.getElementById('bestScoreCard');
+    
+    if (!bestScoreCard) return;
+    
+    if (!bestScore) {
+        bestScoreCard.innerHTML = '<p>No scores yet. Complete a test to see your best score!</p>';
+        return;
+    }
+    
+    const date = new Date(bestScore.date);
+    const formattedDate = date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
+    
+    bestScoreCard.innerHTML = `
+        <div class="best-score-stats">
+            <div class="best-stat">
+                <div class="best-stat-label">WPM</div>
+                <div class="best-stat-value">${bestScore.wpm}</div>
+            </div>
+            <div class="best-stat">
+                <div class="best-stat-label">Accuracy</div>
+                <div class="best-stat-value">${bestScore.accuracy}%</div>
+            </div>
+            <div class="best-stat">
+                <div class="best-stat-label">Errors</div>
+                <div class="best-stat-value">${bestScore.errors}</div>
+            </div>
+        </div>
+        <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.9;">
+            ${formattedDate} • ${bestScore.difficulty} • ${bestScore.duration}s
+        </p>
+    `;
+}
+
+// Display history list
+function displayHistory() {
+    const scores = getScores();
+    const historyList = document.getElementById('historyList');
+    
+    if (!historyList) return;
+    
+    if (scores.length === 0) {
+        historyList.innerHTML = '<p class="no-history">No test history yet. Complete a test to start tracking!</p>';
+        return;
+    }
+    
+    historyList.innerHTML = scores.map((score, index) => {
+        const date = new Date(score.date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        return `
+            <div class="history-item" style="animation-delay: ${index * 0.05}s">
+                <div class="history-item-header">
+                    <span class="history-date">${formattedDate}</span>
+                    <span class="history-difficulty difficulty-${score.difficulty}">${score.difficulty}</span>
+                </div>
+                <div class="history-stats">
+                    <div class="history-stat">
+                        <div class="history-stat-label">WPM</div>
+                        <div class="history-stat-value">${score.wpm}</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="history-stat-label">Accuracy</div>
+                        <div class="history-stat-value">${score.accuracy}%</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="history-stat-label">Errors</div>
+                        <div class="history-stat-value">${score.errors}</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="history-stat-label">Duration</div>
+                        <div class="history-stat-value">${score.duration}s</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Clear history
+function clearHistory() {
+    if (confirm('Are you sure you want to clear all typing history? This cannot be undone.')) {
+        localStorage.removeItem('typingScores');
+        displayBestScore();
+        displayHistory();
+    }
+}
