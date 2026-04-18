@@ -8,8 +8,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>Typing Speed Test</h1>
+        <div class="header-controls">
+            <h1>Typing Speed Test</h1>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
         <p class="description">Test your typing speed and accuracy</p>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
         
         <!-- Settings Section -->
         <div class="settings-container">

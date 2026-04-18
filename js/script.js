@@ -38,6 +38,8 @@ let restartBtn = document.getElementById('restartBtn');
 let resetBtn = document.getElementById('resetBtn');
 let difficultySelect = document.getElementById('difficulty');
 let durationSelect = document.getElementById('duration');
+let themeToggle = document.getElementById('themeToggle');
+let progressBar = document.getElementById('progressBar');
 let userInput = '';
 let timeLeft = 60;
 let initialTime = 60;
@@ -57,6 +59,7 @@ let previousInputLength = 0;
 function init() {
     loadRandomText();
     setupEventListeners();
+    loadTheme();
     console.log('Typing Speed Test initialized');
 }
 
@@ -72,6 +75,45 @@ function setupEventListeners() {
     
     if (resetBtn) {
         resetBtn.addEventListener('click', restartTest);
+    }
+    
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+}
+
+// Toggle theme
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    const isDark = document.body.classList.contains('dark-theme');
+    
+    // Update icon
+    const themeIcon = themeToggle.querySelector('.theme-icon');
+    if (themeIcon) {
+        themeIcon.textContent = isDark ? '☀️' : '🌙';
+    }
+    
+    // Save preference
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+// Load saved theme
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        const themeIcon = themeToggle.querySelector('.theme-icon');
+        if (themeIcon) {
+            themeIcon.textContent = '☀️';
+        }
+    }
+}
+
+// Update progress bar
+function updateProgressBar() {
+    if (progressBar) {
+        const progress = (timeLeft / initialTime) * 100;
+        progressBar.style.width = `${progress}%`;
     }
 }
 
@@ -196,6 +238,7 @@ function startTimer() {
     timerInterval = setInterval(() => {
         timeLeft--;
         updateTimerDisplay();
+        updateProgressBar();
         
         if (timeLeft <= 0) {
             endTest();
@@ -290,6 +333,7 @@ function restartTest() {
     if (wpmElement) wpmElement.textContent = '0';
     if (accuracyElement) accuracyElement.textContent = '100%';
     if (errorsElement) errorsElement.textContent = '0';
+    if (progressBar) progressBar.style.width = '100%';
     
     // Enable settings
     enableSettings();
