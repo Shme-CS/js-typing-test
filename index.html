@@ -11,6 +11,26 @@
         <h1>Typing Speed Test</h1>
         <p class="description">Test your typing speed and accuracy</p>
         
+        <!-- Settings Section -->
+        <div class="settings-container">
+            <div class="setting-group">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty" class="setting-select">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="duration">Duration:</label>
+                <select id="duration" class="setting-select">
+                    <option value="30">30 seconds</option>
+                    <option value="60" selected>60 seconds</option>
+                    <option value="120">120 seconds</option>
+                </select>
+            </div>
+        </div>
+        
         <!-- Stats Section -->
         <div class="stats-container">
             <div class="stat-box">
@@ -24,6 +44,10 @@
             <div class="stat-box">
                 <div class="stat-label">Accuracy</div>
                 <div class="stat-value" id="accuracy">100%</div>
+            </div>
+            <div class="stat-box stat-box-error">
+                <div class="stat-label">Errors</div>
+                <div class="stat-value" id="errors">0</div>
             </div>
         </div>
 
@@ -66,6 +90,10 @@
                     <div class="result-item">
                         <span class="result-label">Characters Typed</span>
                         <span class="result-value" id="finalChars">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Total Errors</span>
+                        <span class="result-value result-error" id="finalErrors">0</span>
                     </div>
                 </div>
                 <button class="btn btn-primary btn-large" id="restartBtn">Try Again</button>
