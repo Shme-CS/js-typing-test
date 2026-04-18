@@ -26,11 +26,21 @@ const paragraphs = [
 // Global variables
 let currentText = '';
 let textToTypeElement = document.getElementById('textToType');
+let typingInput = document.getElementById('typingInput');
+let userInput = '';
 
 // Initialize the application
 function init() {
     loadRandomText();
+    setupEventListeners();
     console.log('Typing Speed Test initialized');
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    if (typingInput) {
+        typingInput.addEventListener('input', handleTyping);
+    }
 }
 
 // Load a random paragraph
@@ -43,8 +53,49 @@ function loadRandomText() {
 // Display the selected text in the UI
 function displayText() {
     if (textToTypeElement) {
-        textToTypeElement.textContent = currentText;
+        textToTypeElement.innerHTML = renderTextWithHighlight('');
     }
+}
+
+// Handle typing input
+function handleTyping(event) {
+    userInput = event.target.value;
+    updateTextDisplay();
+}
+
+// Update text display with highlighting
+function updateTextDisplay() {
+    if (textToTypeElement) {
+        textToTypeElement.innerHTML = renderTextWithHighlight(userInput);
+    }
+}
+
+// Render text with character-by-character highlighting
+function renderTextWithHighlight(typedText) {
+    let html = '';
+    
+    for (let i = 0; i < currentText.length; i++) {
+        const char = currentText[i];
+        
+        if (i < typedText.length) {
+            // Character has been typed
+            if (typedText[i] === char) {
+                // Correct character
+                html += `<span class="correct">${char}</span>`;
+            } else {
+                // Incorrect character
+                html += `<span class="incorrect">${char}</span>`;
+            }
+        } else if (i === typedText.length) {
+            // Current cursor position
+            html += `<span class="current">${char}</span>`;
+        } else {
+            // Not yet typed
+            html += `<span class="untyped">${char}</span>`;
+        }
+    }
+    
+    return html;
 }
 
 // Initialize when DOM is loaded
