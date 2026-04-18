@@ -108,6 +108,44 @@ h1 {
     user-select: none;
 }
 
+/* Character highlighting styles */
+#textToType span {
+    transition: all 0.1s ease;
+}
+
+.correct {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.incorrect {
+    color: #dc3545;
+    background-color: #ffe6e6;
+    font-weight: 500;
+    border-radius: 2px;
+}
+
+.current {
+    background-color: #667eea;
+    color: white;
+    font-weight: 600;
+    border-radius: 2px;
+    animation: blink 1s infinite;
+}
+
+.untyped {
+    color: #6c757d;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.5;
+    }
+}
+
 /* Input Container */
 .input-container {
     margin-bottom: 25px;
