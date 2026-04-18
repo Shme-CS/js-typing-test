@@ -30,6 +30,9 @@ let typingInput = document.getElementById('typingInput');
 let timerElement = document.getElementById('timer');
 let wpmElement = document.getElementById('wpm');
 let accuracyElement = document.getElementById('accuracy');
+let resultsModal = document.getElementById('resultsModal');
+let restartBtn = document.getElementById('restartBtn');
+let resetBtn = document.getElementById('resetBtn');
 let userInput = '';
 let timeLeft = 60;
 let timerInterval = null;
@@ -38,6 +41,8 @@ let testEnded = false;
 let correctChars = 0;
 let incorrectChars = 0;
 let totalCharsTyped = 0;
+let finalWpm = 0;
+let finalAccuracy = 0;
 
 // Initialize the application
 function init() {
@@ -50,6 +55,14 @@ function init() {
 function setupEventListeners() {
     if (typingInput) {
         typingInput.addEventListener('input', handleTyping);
+    }
+    
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartTest);
+    }
+    
+    if (resetBtn) {
+        resetBtn.addEventListener('click', restartTest);
     }
 }
 
@@ -160,7 +173,67 @@ function endTest() {
         typingInput.style.cursor = 'not-allowed';
     }
     
-    console.log('Test ended!');
+    // Store final metrics
+    finalWpm = wpmElement ? parseInt(wpmElement.textContent) : 0;
+    finalAccuracy = accuracyElement ? parseInt(accuracyElement.textContent) : 0;
+    
+    // Show results modal
+    showResults();
+}
+
+// Show results modal
+function showResults() {
+    if (resultsModal) {
+        // Update final stats
+        document.getElementById('finalWpm').textContent = finalWpm;
+        document.getElementById('finalAccuracy').textContent = `${finalAccuracy}%`;
+        document.getElementById('finalChars').textContent = totalCharsTyped;
+        
+        // Show modal
+        resultsModal.classList.add('show');
+    }
+}
+
+// Restart the test
+function restartTest() {
+    // Hide results modal
+    if (resultsModal) {
+        resultsModal.classList.remove('show');
+    }
+    
+    // Reset all variables
+    userInput = '';
+    timeLeft = 60;
+    testStarted = false;
+    testEnded = false;
+    correctChars = 0;
+    incorrectChars = 0;
+    totalCharsTyped = 0;
+    finalWpm = 0;
+    finalAccuracy = 0;
+    
+    // Clear timer
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    
+    // Reset input
+    if (typingInput) {
+        typingInput.value = '';
+        typingInput.disabled = false;
+        typingInput.style.backgroundColor = 'white';
+        typingInput.style.cursor = 'text';
+        typingInput.focus();
+    }
+    
+    // Reset displays
+    if (timerElement) timerElement.textContent = '60s';
+    if (wpmElement) wpmElement.textContent = '0';
+    if (accuracyElement) accuracyElement.textContent = '100%';
+    
+    // Load new text
+    loadRandomText();
 }
 
 // Update text display with highlighting
