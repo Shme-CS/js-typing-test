@@ -11,8 +11,43 @@
         <h1>Typing Speed Test</h1>
         <p class="description">Test your typing speed and accuracy</p>
         
-        <div class="test-area">
-            <!-- Typing test content will be added here -->
+        <!-- Stats Section -->
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-label">Time</div>
+                <div class="stat-value" id="timer">60s</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">WPM</div>
+                <div class="stat-value" id="wpm">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Accuracy</div>
+                <div class="stat-value" id="accuracy">100%</div>
+            </div>
+        </div>
+
+        <!-- Text Display Area -->
+        <div class="text-display" id="textDisplay">
+            <p id="textToType">
+                The quick brown fox jumps over the lazy dog. Practice makes perfect when it comes to typing speed and accuracy. Keep your fingers on the home row and maintain a steady rhythm.
+            </p>
+        </div>
+
+        <!-- Input Field -->
+        <div class="input-container">
+            <textarea 
+                id="typingInput" 
+                class="typing-input" 
+                placeholder="Click here and start typing..."
+                rows="4"
+            ></textarea>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="button-container">
+            <button class="btn btn-primary" id="startBtn">Start Test</button>
+            <button class="btn btn-secondary" id="resetBtn">Reset</button>
         </div>
     </div>
 
