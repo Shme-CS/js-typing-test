@@ -27,7 +27,12 @@ const paragraphs = [
 let currentText = '';
 let textToTypeElement = document.getElementById('textToType');
 let typingInput = document.getElementById('typingInput');
+let timerElement = document.getElementById('timer');
 let userInput = '';
+let timeLeft = 60;
+let timerInterval = null;
+let testStarted = false;
+let testEnded = false;
 
 // Initialize the application
 function init() {
@@ -59,8 +64,53 @@ function displayText() {
 
 // Handle typing input
 function handleTyping(event) {
+    // Start timer on first keystroke
+    if (!testStarted && !testEnded) {
+        startTimer();
+        testStarted = true;
+    }
+    
+    // Prevent typing after test ends
+    if (testEnded) {
+        return;
+    }
+    
     userInput = event.target.value;
     updateTextDisplay();
+}
+
+// Start the countdown timer
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft <= 0) {
+            endTest();
+        }
+    }, 1000);
+}
+
+// Update timer display
+function updateTimerDisplay() {
+    if (timerElement) {
+        timerElement.textContent = `${timeLeft}s`;
+    }
+}
+
+// End the test
+function endTest() {
+    clearInterval(timerInterval);
+    testEnded = true;
+    
+    // Disable input
+    if (typingInput) {
+        typingInput.disabled = true;
+        typingInput.style.backgroundColor = '#f8f9fa';
+        typingInput.style.cursor = 'not-allowed';
+    }
+    
+    console.log('Test ended!');
 }
 
 // Update text display with highlighting
