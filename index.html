@@ -49,6 +49,28 @@
             <button class="btn btn-primary" id="startBtn">Start Test</button>
             <button class="btn btn-secondary" id="resetBtn">Reset</button>
         </div>
+
+        <!-- Results Modal -->
+        <div class="results-modal" id="resultsModal">
+            <div class="results-content">
+                <h2>Test Complete! 🎉</h2>
+                <div class="results-stats">
+                    <div class="result-item">
+                        <span class="result-label">Words Per Minute</span>
+                        <span class="result-value" id="finalWpm">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Accuracy</span>
+                        <span class="result-value" id="finalAccuracy">0%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Characters Typed</span>
+                        <span class="result-value" id="finalChars">0</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-large" id="restartBtn">Try Again</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/script.js"></script>
