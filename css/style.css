@@ -634,19 +634,19 @@ body.dark-theme .results-content {
 
 .results-stats {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
     margin-bottom: 24px;
 }
 
 .result-item {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
-    padding: 20px 18px;
+    padding: 18px 16px;
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     transition: all 0.3s ease;
     animation: popIn 0.5s ease-out backwards;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -676,16 +676,16 @@ body.dark-theme .results-content {
 
 .result-label {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.2px;
     line-height: 1.2;
 }
 
 .result-value {
     color: #7c9ff5;
-    font-size: 2.8rem;
+    font-size: 2.5rem;
     font-weight: 700;
     line-height: 1;
 }
