@@ -1,7 +1,17 @@
-// Typing Speed Test - JavaScript
+/**
+ * Typing Speed Test Application
+ * A web-based typing test to measure WPM, accuracy, and track performance history
+ */
 
-// Sample paragraphs for typing practice
-const paragraphs = {
+// ============================================================================
+// CONSTANTS AND DATA
+// ============================================================================
+
+/**
+ * Sample paragraphs organized by difficulty level
+ * @constant {Object}
+ */
+const TYPING_PARAGRAPHS = {
     easy: [
         "The cat sat on the mat. The dog ran in the park. The sun is bright today.",
         "I like to read books. She plays with her toys. We go to school every day.",
@@ -25,442 +35,589 @@ const paragraphs = {
     ]
 };
 
-// Global variables
-let currentText = '';
-let textToTypeElement = document.getElementById('textToType');
-let typingInput = document.getElementById('typingInput');
-let timerElement = document.getElementById('timer');
-let wpmElement = document.getElementById('wpm');
-let accuracyElement = document.getElementById('accuracy');
-let errorsElement = document.getElementById('errors');
-let resultsModal = document.getElementById('resultsModal');
-let historyModal = document.getElementById('historyModal');
-let restartBtn = document.getElementById('restartBtn');
-let resetBtn = document.getElementById('resetBtn');
-let viewHistoryBtn = document.getElementById('viewHistoryBtn');
-let closeHistoryBtn = document.getElementById('closeHistoryBtn');
-let clearHistoryBtn = document.getElementById('clearHistoryBtn');
-let difficultySelect = document.getElementById('difficulty');
-let durationSelect = document.getElementById('duration');
-let themeToggle = document.getElementById('themeToggle');
-let progressBar = document.getElementById('progressBar');
-let userInput = '';
-let timeLeft = 60;
-let initialTime = 60;
-let timerInterval = null;
-let testStarted = false;
-let testEnded = false;
-let correctChars = 0;
-let incorrectChars = 0;
-let totalCharsTyped = 0;
-let errorCount = 0;
-let finalWpm = 0;
-let finalAccuracy = 0;
-let currentDifficulty = 'medium';
-let previousInputLength = 0;
+/**
+ * LocalStorage keys
+ * @constant {Object}
+ */
+const STORAGE_KEYS = {
+    THEME: 'theme',
+    SCORES: 'typingScores'
+};
 
-// Initialize the application
-function init() {
+/**
+ * Configuration constants
+ * @constant {Object}
+ */
+const CONFIG = {
+    MAX_HISTORY_ITEMS: 50,
+    WORDS_PER_CHAR: 5, // Standard: 5 characters = 1 word
+    DEFAULT_DIFFICULTY: 'medium',
+    DEFAULT_DURATION: 60
+};
+
+// ============================================================================
+// DOM ELEMENTS CACHE
+// ============================================================================
+
+/**
+ * Cache DOM elements for better performance
+ * @type {Object}
+ */
+const DOM = {
+    // Text display
+    textToType: document.getElementById('textToType'),
+    typingInput: document.getElementById('typingInput'),
+    
+    // Stats display
+    timer: document.getElementById('timer'),
+    wpm: document.getElementById('wpm'),
+    accuracy: document.getElementById('accuracy'),
+    errors: document.getElementById('errors'),
+    progressBar: document.getElementById('progressBar'),
+    
+    // Modals
+    resultsModal: document.getElementById('resultsModal'),
+    historyModal: document.getElementById('historyModal'),
+    
+    // Buttons
+    restartBtn: document.getElementById('restartBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+    closeHistoryBtn: document.getElementById('closeHistoryBtn'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    themeToggle: document.getElementById('themeToggle'),
+    
+    // Settings
+    difficultySelect: document.getElementById('difficulty'),
+    durationSelect: document.getElementById('duration')
+};
+
+// ============================================================================
+// APPLICATION STATE
+// ============================================================================
+
+/**
+ * Application state object
+ * @type {Object}
+ */
+const state = {
+    // Test content
+    currentText: '',
+    userInput: '',
+    
+    // Timer
+    timeLeft: CONFIG.DEFAULT_DURATION,
+    initialTime: CONFIG.DEFAULT_DURATION,
+    timerInterval: null,
+    
+    // Test status
+    isTestStarted: false,
+    isTestEnded: false,
+    
+    // Metrics
+    correctChars: 0,
+    incorrectChars: 0,
+    totalCharsTyped: 0,
+    errorCount: 0,
+    finalWpm: 0,
+    finalAccuracy: 0,
+    
+    // Settings
+    currentDifficulty: CONFIG.DEFAULT_DIFFICULTY,
+    previousInputLength: 0
+};
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+/**
+ * Initialize the application
+ */
+function initializeApp() {
     loadRandomText();
-    setupEventListeners();
-    loadTheme();
-    console.log('Typing Speed Test initialized');
+    attachEventListeners();
+    loadSavedTheme();
+    console.log('Typing Speed Test initialized successfully');
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    if (typingInput) {
-        typingInput.addEventListener('input', handleTyping);
+/**
+ * Attach all event listeners
+ */
+function attachEventListeners() {
+    // Typing input
+    if (DOM.typingInput) {
+        DOM.typingInput.addEventListener('input', handleTypingInput);
     }
     
-    if (restartBtn) {
-        restartBtn.addEventListener('click', restartTest);
-    }
+    // Restart buttons
+    if (DOM.restartBtn) DOM.restartBtn.addEventListener('click', resetTest);
+    if (DOM.resetBtn) DOM.resetBtn.addEventListener('click', resetTest);
     
-    if (resetBtn) {
-        resetBtn.addEventListener('click', restartTest);
-    }
+    // Theme toggle
+    if (DOM.themeToggle) DOM.themeToggle.addEventListener('click', toggleTheme);
     
-    if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
-    }
-    
-    if (viewHistoryBtn) {
-        viewHistoryBtn.addEventListener('click', showHistory);
-    }
-    
-    if (closeHistoryBtn) {
-        closeHistoryBtn.addEventListener('click', closeHistory);
-    }
-    
-    if (clearHistoryBtn) {
-        clearHistoryBtn.addEventListener('click', clearHistory);
-    }
+    // History modal
+    if (DOM.viewHistoryBtn) DOM.viewHistoryBtn.addEventListener('click', openHistoryModal);
+    if (DOM.closeHistoryBtn) DOM.closeHistoryBtn.addEventListener('click', closeHistoryModal);
+    if (DOM.clearHistoryBtn) DOM.clearHistoryBtn.addEventListener('click', clearAllHistory);
 }
 
-// Toggle theme
-function toggleTheme() {
-    document.body.classList.toggle('dark-theme');
-    const isDark = document.body.classList.contains('dark-theme');
-    
-    // Update icon
-    const themeIcon = themeToggle.querySelector('.theme-icon');
-    if (themeIcon) {
-        themeIcon.textContent = isDark ? '☀️' : '🌙';
-    }
-    
-    // Save preference
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-}
+// ============================================================================
+// TEXT MANAGEMENT
+// ============================================================================
 
-// Load saved theme
-function loadTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-        const themeIcon = themeToggle.querySelector('.theme-icon');
-        if (themeIcon) {
-            themeIcon.textContent = '☀️';
-        }
-    }
-}
-
-// Update progress bar
-function updateProgressBar() {
-    if (progressBar) {
-        const progress = (timeLeft / initialTime) * 100;
-        progressBar.style.width = `${progress}%`;
-    }
-}
-
-// Load a random paragraph
+/**
+ * Load a random paragraph based on current difficulty
+ */
 function loadRandomText() {
-    const difficulty = currentDifficulty;
-    const paragraphArray = paragraphs[difficulty];
+    const paragraphArray = TYPING_PARAGRAPHS[state.currentDifficulty];
     const randomIndex = Math.floor(Math.random() * paragraphArray.length);
-    currentText = paragraphArray[randomIndex];
-    displayText();
+    state.currentText = paragraphArray[randomIndex];
+    renderTextDisplay();
 }
 
-// Display the selected text in the UI
-function displayText() {
-    if (textToTypeElement) {
-        textToTypeElement.innerHTML = renderTextWithHighlight('');
+/**
+ * Render the text display with initial state
+ */
+function renderTextDisplay() {
+    if (DOM.textToType) {
+        DOM.textToType.innerHTML = generateHighlightedHTML('');
     }
 }
 
-// Handle typing input
-function handleTyping(event) {
-    // Start timer on first keystroke
-    if (!testStarted && !testEnded) {
-        startTimer();
-        testStarted = true;
-        disableSettings();
+/**
+ * Update text display with current user input
+ */
+function updateTextDisplay() {
+    if (DOM.textToType) {
+        DOM.textToType.innerHTML = generateHighlightedHTML(state.userInput);
+    }
+}
+
+/**
+ * Generate HTML with character-by-character highlighting
+ * @param {string} typedText - The text typed by user
+ * @returns {string} HTML string with highlighted characters
+ */
+function generateHighlightedHTML(typedText) {
+    const fragments = [];
+    
+    for (let i = 0; i < state.currentText.length; i++) {
+        const char = state.currentText[i];
+        let className = 'untyped';
+        
+        if (i < typedText.length) {
+            // Character has been typed
+            className = typedText[i] === char ? 'correct' : 'incorrect';
+        } else if (i === typedText.length) {
+            // Current cursor position
+            className = 'current';
+        }
+        
+        fragments.push(`<span class="${className}">${char}</span>`);
+    }
+    
+    return fragments.join('');
+}
+
+// ============================================================================
+// INPUT HANDLING
+// ============================================================================
+
+/**
+ * Handle typing input events
+ * @param {Event} event - Input event
+ */
+function handleTypingInput(event) {
+    // Start test on first keystroke
+    if (!state.isTestStarted && !state.isTestEnded) {
+        startTest();
     }
     
     // Prevent typing after test ends
-    if (testEnded) {
+    if (state.isTestEnded) {
         return;
     }
     
     const currentInputLength = event.target.value.length;
     
-    // Detect backspace (input length decreased)
-    if (currentInputLength < previousInputLength) {
-        // User pressed backspace - don't count as error
-        previousInputLength = currentInputLength;
-    } else {
-        // Check if the newly typed character is incorrect
+    // Track errors (excluding backspace corrections)
+    if (currentInputLength > state.previousInputLength) {
         const lastTypedIndex = currentInputLength - 1;
-        if (lastTypedIndex >= 0 && lastTypedIndex < currentText.length) {
-            if (event.target.value[lastTypedIndex] !== currentText[lastTypedIndex]) {
-                errorCount++;
+        if (lastTypedIndex < state.currentText.length) {
+            if (event.target.value[lastTypedIndex] !== state.currentText[lastTypedIndex]) {
+                state.errorCount++;
                 updateErrorDisplay();
             }
         }
-        previousInputLength = currentInputLength;
     }
     
-    userInput = event.target.value;
+    state.previousInputLength = currentInputLength;
+    state.userInput = event.target.value;
+    
+    // Update UI
     updateTextDisplay();
-    calculateMetrics();
+    calculateAndUpdateMetrics();
 }
 
-// Calculate WPM and accuracy
-function calculateMetrics() {
-    // Count correct and incorrect characters
-    correctChars = 0;
-    incorrectChars = 0;
+// ============================================================================
+// TEST CONTROL
+// ============================================================================
+
+/**
+ * Start the typing test
+ */
+function startTest() {
+    state.isTestStarted = true;
+    disableSettingsControls();
+    startCountdownTimer();
+}
+
+/**
+ * Start the countdown timer
+ */
+function startCountdownTimer() {
+    state.timerInterval = setInterval(() => {
+        state.timeLeft--;
+        updateTimerDisplay();
+        updateProgressBar();
+        
+        if (state.timeLeft <= 0) {
+            endTest();
+        }
+    }, 1000);
+}
+
+/**
+ * End the typing test
+ */
+function endTest() {
+    clearInterval(state.timerInterval);
+    state.isTestEnded = true;
     
-    for (let i = 0; i < userInput.length; i++) {
-        if (i < currentText.length) {
-            if (userInput[i] === currentText[i]) {
-                correctChars++;
+    // Disable input
+    if (DOM.typingInput) {
+        DOM.typingInput.disabled = true;
+        DOM.typingInput.style.backgroundColor = '#f8f9fa';
+        DOM.typingInput.style.cursor = 'not-allowed';
+    }
+    
+    // Store final metrics
+    state.finalWpm = DOM.wpm ? parseInt(DOM.wpm.textContent) : 0;
+    state.finalAccuracy = DOM.accuracy ? parseInt(DOM.accuracy.textContent) : 0;
+    
+    // Save and show results
+    saveTestScore();
+    showResultsModal();
+}
+
+/**
+ * Reset the test to initial state
+ */
+function resetTest() {
+    // Hide modals
+    if (DOM.resultsModal) DOM.resultsModal.classList.remove('show');
+    
+    // Get current settings
+    state.initialTime = parseInt(DOM.durationSelect.value);
+    state.timeLeft = state.initialTime;
+    state.currentDifficulty = DOM.difficultySelect.value;
+    
+    // Reset state
+    Object.assign(state, {
+        userInput: '',
+        isTestStarted: false,
+        isTestEnded: false,
+        correctChars: 0,
+        incorrectChars: 0,
+        totalCharsTyped: 0,
+        errorCount: 0,
+        finalWpm: 0,
+        finalAccuracy: 0,
+        previousInputLength: 0
+    });
+    
+    // Clear timer
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+    }
+    
+    // Reset input field
+    if (DOM.typingInput) {
+        DOM.typingInput.value = '';
+        DOM.typingInput.disabled = false;
+        DOM.typingInput.style.backgroundColor = 'white';
+        DOM.typingInput.style.cursor = 'text';
+        DOM.typingInput.focus();
+    }
+    
+    // Reset displays
+    updateTimerDisplay();
+    updateMetricsDisplay(0, 100);
+    updateErrorDisplay();
+    if (DOM.progressBar) DOM.progressBar.style.width = '100%';
+    
+    // Enable settings and load new text
+    enableSettingsControls();
+    loadRandomText();
+}
+
+// ============================================================================
+// METRICS CALCULATION
+// ============================================================================
+
+/**
+ * Calculate and update WPM and accuracy metrics
+ */
+function calculateAndUpdateMetrics() {
+    // Count correct and incorrect characters
+    state.correctChars = 0;
+    state.incorrectChars = 0;
+    
+    for (let i = 0; i < state.userInput.length; i++) {
+        if (i < state.currentText.length) {
+            if (state.userInput[i] === state.currentText[i]) {
+                state.correctChars++;
             } else {
-                incorrectChars++;
+                state.incorrectChars++;
             }
         }
     }
     
-    totalCharsTyped = userInput.length;
+    state.totalCharsTyped = state.userInput.length;
     
     // Calculate WPM (words = characters / 5)
-    const timeElapsed = (initialTime - timeLeft) || 1; // Prevent division by zero
+    const timeElapsed = Math.max(state.initialTime - state.timeLeft, 1);
     const minutes = timeElapsed / 60;
-    const words = correctChars / 5;
+    const words = state.correctChars / CONFIG.WORDS_PER_CHAR;
     const wpm = Math.round(words / minutes);
     
     // Calculate accuracy
-    const accuracy = totalCharsTyped > 0 
-        ? Math.round((correctChars / totalCharsTyped) * 100) 
+    const accuracy = state.totalCharsTyped > 0 
+        ? Math.round((state.correctChars / state.totalCharsTyped) * 100) 
         : 100;
     
     // Update display
     updateMetricsDisplay(wpm, accuracy);
 }
 
-// Update error display
-function updateErrorDisplay() {
-    if (errorsElement) {
-        errorsElement.textContent = errorCount;
-    }
-}
+// ============================================================================
+// UI UPDATES
+// ============================================================================
 
-// Disable settings during test
-function disableSettings() {
-    if (difficultySelect) difficultySelect.disabled = true;
-    if (durationSelect) durationSelect.disabled = true;
-}
-
-// Enable settings after test
-function enableSettings() {
-    if (difficultySelect) difficultySelect.disabled = false;
-    if (durationSelect) durationSelect.disabled = false;
-}
-
-// Update metrics display
-function updateMetricsDisplay(wpm, accuracy) {
-    if (wpmElement) {
-        wpmElement.textContent = wpm;
-    }
-    
-    if (accuracyElement) {
-        accuracyElement.textContent = `${accuracy}%`;
-    }
-}
-
-// Start the countdown timer
-function startTimer() {
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
-        updateProgressBar();
-        
-        if (timeLeft <= 0) {
-            endTest();
-        }
-    }, 1000);
-}
-
-// Update timer display
+/**
+ * Update timer display
+ */
 function updateTimerDisplay() {
-    if (timerElement) {
-        timerElement.textContent = `${timeLeft}s`;
+    if (DOM.timer) {
+        DOM.timer.textContent = `${state.timeLeft}s`;
     }
 }
 
-// End the test
-function endTest() {
-    clearInterval(timerInterval);
-    testEnded = true;
-    
-    // Disable input
-    if (typingInput) {
-        typingInput.disabled = true;
-        typingInput.style.backgroundColor = '#f8f9fa';
-        typingInput.style.cursor = 'not-allowed';
-    }
-    
-    // Store final metrics
-    finalWpm = wpmElement ? parseInt(wpmElement.textContent) : 0;
-    finalAccuracy = accuracyElement ? parseInt(accuracyElement.textContent) : 0;
-    
-    // Save score to history
-    saveScore();
-    
-    // Show results modal
-    showResults();
+/**
+ * Update metrics display (WPM and accuracy)
+ * @param {number} wpm - Words per minute
+ * @param {number} accuracy - Accuracy percentage
+ */
+function updateMetricsDisplay(wpm, accuracy) {
+    if (DOM.wpm) DOM.wpm.textContent = wpm;
+    if (DOM.accuracy) DOM.accuracy.textContent = `${accuracy}%`;
 }
 
-// Show results modal
-function showResults() {
-    if (resultsModal) {
-        // Update final stats
-        document.getElementById('finalWpm').textContent = finalWpm;
-        document.getElementById('finalAccuracy').textContent = `${finalAccuracy}%`;
-        document.getElementById('finalChars').textContent = totalCharsTyped;
-        document.getElementById('finalErrors').textContent = errorCount;
-        
-        // Show modal
-        resultsModal.classList.add('show');
+/**
+ * Update error count display
+ */
+function updateErrorDisplay() {
+    if (DOM.errors) {
+        DOM.errors.textContent = state.errorCount;
     }
 }
 
-// Restart the test
-function restartTest() {
-    // Hide results modal
-    if (resultsModal) {
-        resultsModal.classList.remove('show');
-    }
-    
-    // Get selected duration
-    initialTime = parseInt(durationSelect.value);
-    timeLeft = initialTime;
-    
-    // Get selected difficulty
-    currentDifficulty = difficultySelect.value;
-    
-    // Reset all variables
-    userInput = '';
-    testStarted = false;
-    testEnded = false;
-    correctChars = 0;
-    incorrectChars = 0;
-    totalCharsTyped = 0;
-    errorCount = 0;
-    finalWpm = 0;
-    finalAccuracy = 0;
-    previousInputLength = 0;
-    
-    // Clear timer
-    if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
-    
-    // Reset input
-    if (typingInput) {
-        typingInput.value = '';
-        typingInput.disabled = false;
-        typingInput.style.backgroundColor = 'white';
-        typingInput.style.cursor = 'text';
-        typingInput.focus();
-    }
-    
-    // Reset displays
-    if (timerElement) timerElement.textContent = `${initialTime}s`;
-    if (wpmElement) wpmElement.textContent = '0';
-    if (accuracyElement) accuracyElement.textContent = '100%';
-    if (errorsElement) errorsElement.textContent = '0';
-    if (progressBar) progressBar.style.width = '100%';
-    
-    // Enable settings
-    enableSettings();
-    
-    // Load new text
-    loadRandomText();
-}
-
-// Update text display with highlighting
-function updateTextDisplay() {
-    if (textToTypeElement) {
-        textToTypeElement.innerHTML = renderTextWithHighlight(userInput);
+/**
+ * Update progress bar width
+ */
+function updateProgressBar() {
+    if (DOM.progressBar) {
+        const progress = (state.timeLeft / state.initialTime) * 100;
+        DOM.progressBar.style.width = `${progress}%`;
     }
 }
 
-// Render text with character-by-character highlighting
-function renderTextWithHighlight(typedText) {
-    let html = '';
+/**
+ * Disable settings controls during test
+ */
+function disableSettingsControls() {
+    if (DOM.difficultySelect) DOM.difficultySelect.disabled = true;
+    if (DOM.durationSelect) DOM.durationSelect.disabled = true;
+}
+
+/**
+ * Enable settings controls after test
+ */
+function enableSettingsControls() {
+    if (DOM.difficultySelect) DOM.difficultySelect.disabled = false;
+    if (DOM.durationSelect) DOM.durationSelect.disabled = false;
+}
+
+// ============================================================================
+// MODALS
+// ============================================================================
+
+/**
+ * Show results modal with final scores
+ */
+function showResultsModal() {
+    if (!DOM.resultsModal) return;
     
-    for (let i = 0; i < currentText.length; i++) {
-        const char = currentText[i];
-        
-        if (i < typedText.length) {
-            // Character has been typed
-            if (typedText[i] === char) {
-                // Correct character
-                html += `<span class="correct">${char}</span>`;
-            } else {
-                // Incorrect character
-                html += `<span class="incorrect">${char}</span>`;
-            }
-        } else if (i === typedText.length) {
-            // Current cursor position
-            html += `<span class="current">${char}</span>`;
-        } else {
-            // Not yet typed
-            html += `<span class="untyped">${char}</span>`;
+    // Update final stats using cached elements
+    const finalWpmEl = document.getElementById('finalWpm');
+    const finalAccuracyEl = document.getElementById('finalAccuracy');
+    const finalCharsEl = document.getElementById('finalChars');
+    const finalErrorsEl = document.getElementById('finalErrors');
+    
+    if (finalWpmEl) finalWpmEl.textContent = state.finalWpm;
+    if (finalAccuracyEl) finalAccuracyEl.textContent = `${state.finalAccuracy}%`;
+    if (finalCharsEl) finalCharsEl.textContent = state.totalCharsTyped;
+    if (finalErrorsEl) finalErrorsEl.textContent = state.errorCount;
+    
+    DOM.resultsModal.classList.add('show');
+}
+
+/**
+ * Open history modal
+ */
+function openHistoryModal() {
+    if (DOM.historyModal) {
+        renderBestScore();
+        renderHistoryList();
+        DOM.historyModal.classList.add('show');
+    }
+}
+
+/**
+ * Close history modal
+ */
+function closeHistoryModal() {
+    if (DOM.historyModal) {
+        DOM.historyModal.classList.remove('show');
+    }
+}
+
+// ============================================================================
+// THEME MANAGEMENT
+// ============================================================================
+
+/**
+ * Toggle between light and dark theme
+ */
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    const isDarkMode = document.body.classList.contains('dark-theme');
+    
+    // Update theme icon
+    const themeIcon = DOM.themeToggle?.querySelector('.theme-icon');
+    if (themeIcon) {
+        themeIcon.textContent = isDarkMode ? '☀️' : '🌙';
+    }
+    
+    // Save preference to localStorage
+    localStorage.setItem(STORAGE_KEYS.THEME, isDarkMode ? 'dark' : 'light');
+}
+
+/**
+ * Load saved theme from localStorage
+ */
+function loadSavedTheme() {
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+    
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        const themeIcon = DOM.themeToggle?.querySelector('.theme-icon');
+        if (themeIcon) {
+            themeIcon.textContent = '☀️';
         }
     }
-    
-    return html;
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', init);
+// ============================================================================
+// SCORE PERSISTENCE
+// ============================================================================
 
-
-// Save score to localStorage
-function saveScore() {
-    const score = {
-        wpm: finalWpm,
-        accuracy: finalAccuracy,
-        errors: errorCount,
-        chars: totalCharsTyped,
-        difficulty: currentDifficulty,
-        duration: initialTime,
+/**
+ * Save test score to localStorage
+ */
+function saveTestScore() {
+    const scoreData = {
+        wpm: state.finalWpm,
+        accuracy: state.finalAccuracy,
+        errors: state.errorCount,
+        chars: state.totalCharsTyped,
+        difficulty: state.currentDifficulty,
+        duration: state.initialTime,
         date: new Date().toISOString()
     };
     
-    // Get existing scores
-    let scores = JSON.parse(localStorage.getItem('typingScores')) || [];
+    const scores = getStoredScores();
+    scores.unshift(scoreData);
     
-    // Add new score
-    scores.unshift(score);
+    // Keep only the most recent scores
+    const trimmedScores = scores.slice(0, CONFIG.MAX_HISTORY_ITEMS);
     
-    // Keep only last 50 scores
-    if (scores.length > 50) {
-        scores = scores.slice(0, 50);
+    localStorage.setItem(STORAGE_KEYS.SCORES, JSON.stringify(trimmedScores));
+}
+
+/**
+ * Get all stored scores from localStorage
+ * @returns {Array} Array of score objects
+ */
+function getStoredScores() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.SCORES)) || [];
+    } catch (error) {
+        console.error('Error parsing stored scores:', error);
+        return [];
     }
-    
-    // Save to localStorage
-    localStorage.setItem('typingScores', JSON.stringify(scores));
 }
 
-// Get all scores from localStorage
-function getScores() {
-    return JSON.parse(localStorage.getItem('typingScores')) || [];
-}
-
-// Get best score
+/**
+ * Get the best score (highest WPM)
+ * @returns {Object|null} Best score object or null
+ */
 function getBestScore() {
-    const scores = getScores();
+    const scores = getStoredScores();
+    
     if (scores.length === 0) return null;
     
-    // Find highest WPM
-    return scores.reduce((best, current) => {
-        return current.wpm > best.wpm ? current : best;
-    });
+    return scores.reduce((best, current) => 
+        current.wpm > best.wpm ? current : best
+    );
 }
 
-// Show history modal
-function showHistory() {
-    if (historyModal) {
-        displayBestScore();
-        displayHistory();
-        historyModal.classList.add('show');
+/**
+ * Clear all stored scores
+ */
+function clearAllHistory() {
+    const confirmed = confirm(
+        'Are you sure you want to clear all typing history? This cannot be undone.'
+    );
+    
+    if (confirmed) {
+        localStorage.removeItem(STORAGE_KEYS.SCORES);
+        renderBestScore();
+        renderHistoryList();
     }
 }
 
-// Close history modal
-function closeHistory() {
-    if (historyModal) {
-        historyModal.classList.remove('show');
-    }
-}
+// ============================================================================
+// HISTORY RENDERING
+// ============================================================================
 
-// Display best score
-function displayBestScore() {
+/**
+ * Render the best score card
+ */
+function renderBestScore() {
     const bestScore = getBestScore();
     const bestScoreCard = document.getElementById('bestScoreCard');
     
@@ -471,12 +628,7 @@ function displayBestScore() {
         return;
     }
     
-    const date = new Date(bestScore.date);
-    const formattedDate = date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-    });
+    const formattedDate = formatDate(bestScore.date, { includeTime: false });
     
     bestScoreCard.innerHTML = `
         <div class="best-score-stats">
@@ -499,9 +651,11 @@ function displayBestScore() {
     `;
 }
 
-// Display history list
-function displayHistory() {
-    const scores = getScores();
+/**
+ * Render the history list
+ */
+function renderHistoryList() {
+    const scores = getStoredScores();
     const historyList = document.getElementById('historyList');
     
     if (!historyList) return;
@@ -511,50 +665,79 @@ function displayHistory() {
         return;
     }
     
-    historyList.innerHTML = scores.map((score, index) => {
-        const date = new Date(score.date);
-        const formattedDate = date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        return `
-            <div class="history-item" style="animation-delay: ${index * 0.05}s">
-                <div class="history-item-header">
-                    <span class="history-date">${formattedDate}</span>
-                    <span class="history-difficulty difficulty-${score.difficulty}">${score.difficulty}</span>
-                </div>
-                <div class="history-stats">
-                    <div class="history-stat">
-                        <div class="history-stat-label">WPM</div>
-                        <div class="history-stat-value">${score.wpm}</div>
-                    </div>
-                    <div class="history-stat">
-                        <div class="history-stat-label">Accuracy</div>
-                        <div class="history-stat-value">${score.accuracy}%</div>
-                    </div>
-                    <div class="history-stat">
-                        <div class="history-stat-label">Errors</div>
-                        <div class="history-stat-value">${score.errors}</div>
-                    </div>
-                    <div class="history-stat">
-                        <div class="history-stat-label">Duration</div>
-                        <div class="history-stat-value">${score.duration}s</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
+    const historyHTML = scores.map((score, index) => 
+        createHistoryItemHTML(score, index)
+    ).join('');
+    
+    historyList.innerHTML = historyHTML;
 }
 
-// Clear history
-function clearHistory() {
-    if (confirm('Are you sure you want to clear all typing history? This cannot be undone.')) {
-        localStorage.removeItem('typingScores');
-        displayBestScore();
-        displayHistory();
-    }
+/**
+ * Create HTML for a single history item
+ * @param {Object} score - Score data
+ * @param {number} index - Item index for animation delay
+ * @returns {string} HTML string
+ */
+function createHistoryItemHTML(score, index) {
+    const formattedDate = formatDate(score.date, { includeTime: true });
+    
+    return `
+        <div class="history-item" style="animation-delay: ${index * 0.05}s">
+            <div class="history-item-header">
+                <span class="history-date">${formattedDate}</span>
+                <span class="history-difficulty difficulty-${score.difficulty}">${score.difficulty}</span>
+            </div>
+            <div class="history-stats">
+                <div class="history-stat">
+                    <div class="history-stat-label">WPM</div>
+                    <div class="history-stat-value">${score.wpm}</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Accuracy</div>
+                    <div class="history-stat-value">${score.accuracy}%</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Errors</div>
+                    <div class="history-stat-value">${score.errors}</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Duration</div>
+                    <div class="history-stat-value">${score.duration}s</div>
+                </div>
+            </div>
+        </div>
+    `;
 }
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Format date string
+ * @param {string} dateString - ISO date string
+ * @param {Object} options - Formatting options
+ * @returns {string} Formatted date string
+ */
+function formatDate(dateString, options = {}) {
+    const date = new Date(dateString);
+    const formatOptions = {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    };
+    
+    if (options.includeTime) {
+        formatOptions.hour = '2-digit';
+        formatOptions.minute = '2-digit';
+    }
+    
+    return date.toLocaleDateString('en-US', formatOptions);
+}
+
+// ============================================================================
+// APPLICATION ENTRY POINT
+// ============================================================================
+
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeApp);
