@@ -407,12 +407,14 @@ h1 {
     resize: none;
     transition: all 0.3s ease;
     background: var(--input-bg);
-    color: #1a1a1a;
+    color: #000000 !important;
     font-weight: 500;
+    -webkit-text-fill-color: #000000;
 }
 
 body.dark-theme .typing-input {
-    color: #e9ecef;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
 }
 
 .typing-input:focus {
