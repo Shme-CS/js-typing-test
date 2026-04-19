@@ -347,10 +347,31 @@ h1 {
 }
 
 .current {
-    background-color: var(--input-focus);
+    position: relative;
     color: white;
     font-weight: 600;
+}
+
+/* Only show background for non-space characters */
+.current:not([data-space]) {
+    background-color: var(--input-focus);
     border-radius: 2px;
+    animation: pulse 1s infinite;
+}
+
+/* Show underline for space characters */
+.current[data-space] {
+    color: transparent;
+}
+
+.current[data-space]::after {
+    content: '';
+    position: absolute;
+    bottom: 0.2em;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--input-focus);
     animation: pulse 1s infinite;
 }
 

@@ -205,7 +205,9 @@ function generateHighlightedHTML(typedText) {
     
     for (let i = 0; i < state.currentText.length; i++) {
         const char = state.currentText[i];
+        const isSpace = char === ' ';
         let className = 'untyped';
+        let dataAttr = isSpace ? ' data-space="true"' : '';
         
         if (i < typedText.length) {
             // Character has been typed
@@ -215,7 +217,7 @@ function generateHighlightedHTML(typedText) {
             className = 'current';
         }
         
-        fragments.push(`<span class="${className}">${char}</span>`);
+        fragments.push(`<span class="${className}"${dataAttr}>${char}</span>`);
     }
     
     return fragments.join('');
